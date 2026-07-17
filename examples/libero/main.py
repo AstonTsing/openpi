@@ -15,7 +15,7 @@ import tqdm
 import tyro
 
 LIBERO_DUMMY_ACTION = [0.0] * 6 + [-1.0]
-LIBERO_ENV_RESOLUTION = 256  # resolution used to render training data
+LIBERO_ENV_RESOLUTION = 4096  # resolution used to render training data # DEFAULT: 256 仿真环境原始渲染
 
 
 @dataclasses.dataclass
@@ -25,7 +25,7 @@ class Args:
     #################################################################################################################
     host: str = "0.0.0.0"
     port: int = 8000
-    resize_size: int = 224
+    resize_size: int = 4096 # DEFAULT: 224 保存视频时的分辨率
     replan_steps: int = 5
 
     #################################################################################################################
@@ -170,7 +170,7 @@ def eval_libero(args: Args) -> None:
             imageio.mimwrite(
                 pathlib.Path(args.video_out_path) / f"rollout_{task_segment}_{suffix}.mp4",
                 [np.asarray(x) for x in replay_images],
-                fps=10,
+                fps=60, # DEFAULT: 10
             )
 
             # Log current results
