@@ -15,7 +15,7 @@ import tqdm
 import tyro
 
 LIBERO_DUMMY_ACTION = [0.0] * 6 + [-1.0]
-LIBERO_ENV_RESOLUTION = 4096  # resolution used to render training data # DEFAULT: 256 仿真环境原始渲染
+LIBERO_ENV_RESOLUTION = 256  # resolution used to render training data # DEFAULT: 256 仿真环境原始渲染
 
 
 @dataclasses.dataclass
@@ -25,7 +25,7 @@ class Args:
     #################################################################################################################
     host: str = "0.0.0.0"
     port: int = 8000
-    resize_size: int = 4096 # DEFAULT: 224 保存视频时的分辨率
+    resize_size: int = 224 # DEFAULT: 224 保存视频时的分辨率
     replan_steps: int = 5
 
     #################################################################################################################
@@ -112,17 +112,17 @@ def eval_libero(args: Args) -> None:
 
                     # Get preprocessed image
                     # IMPORTANT: rotate 180 degrees to match train preprocessing
-                    img = np.ascontiguousarray(obs["agentview_image"][::-1, ::-1])
-                    wrist_img = np.ascontiguousarray(obs["robot0_eye_in_hand_image"][::-1, ::-1])
+                    img = np.ascontiguousarray(obs["agentview_image"][::-1, ::-1]) # 从仿真环境 obs 里取出第三视角相机图像。旋转180度
+                    wrist_img = np.ascontiguousarray(obs["robot0_eye_in_hand_image"][::-1, ::-1]) # 从 obs 里取出腕部相机图像。旋转180度
                     img = image_tools.convert_to_uint8(
                         image_tools.resize_with_pad(img, args.resize_size, args.resize_size)
-                    )
+                    ) # 把第三视角图像 resize 成模型需要的尺寸，默认是resize_size×resize_size=224×224
                     wrist_img = image_tools.convert_to_uint8(
                         image_tools.resize_with_pad(wrist_img, args.resize_size, args.resize_size)
-                    )
+                    ) # 对腕部相机图像做同样的处理。默认是resize_size×resize_size=224×224
 
                     # Save preprocessed image for replay video
-                    replay_images.append(img)
+                    replay_images.append(img) # 把当前这一帧第三视角图像保存到 replay_images 列表里
 
                     if not action_plan:
                         # Finished executing previous action chunk -- compute new chunk
@@ -170,7 +170,7 @@ def eval_libero(args: Args) -> None:
             imageio.mimwrite(
                 pathlib.Path(args.video_out_path) / f"rollout_{task_segment}_{suffix}.mp4",
                 [np.asarray(x) for x in replay_images],
-                fps=60, # DEFAULT: 10
+                fps=10, # DEFAULT: 10 保存视频的帧率
             )
 
             # Log current results
